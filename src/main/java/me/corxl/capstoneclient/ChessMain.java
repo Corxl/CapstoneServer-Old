@@ -14,7 +14,7 @@ public class ChessMain extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(ChessMain.class.getResource("main-window.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 320, 240);
+        Scene scene = new Scene(fxmlLoader.load(), 750, 800);
         stage.setTitle("Chess " + VERSION);
         stage.setScene(scene);
         stage.show();

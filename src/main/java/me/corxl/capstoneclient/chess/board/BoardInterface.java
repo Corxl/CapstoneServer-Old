@@ -6,7 +6,6 @@ public interface BoardInterface {
     Player getBlackPlayer();
     Player getWhitePlayer();
     boolean isGameOver();
-    Space[][] getSpaces();
     void restart();
     void updateBoard(Space[][] spaces);
 }

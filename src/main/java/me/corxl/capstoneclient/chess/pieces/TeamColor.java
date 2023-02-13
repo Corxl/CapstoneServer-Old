@@ -1,5 +1,5 @@
 package me.corxl.capstoneclient.chess.pieces;
 
-enum TeamColor {
+public enum TeamColor {
     WHITE, BLACK;
 }
