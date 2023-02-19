@@ -96,7 +96,7 @@ public class Space extends StackPane implements SpaceInterface {
                 Board.isPieceSelected = false;
                 Board.clearSelections();
                 Board.setTurn(Board.getTurn() == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE);
-                Board.checkKingsSaftey();
+                //Board.checkKingsSaftey();
 
             }
         }

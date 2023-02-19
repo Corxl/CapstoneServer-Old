@@ -1,5 +1,6 @@
 package me.corxl.capstoneclient;
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -26,9 +27,11 @@ public class ChessController implements Initializable {
 
     @FXML
     void resetGame(ActionEvent event) {
-        Board.checkKingsSaftey();
-//        mainPane.getChildren().remove(currentBoard);
-//        currentBoard = new Board(new Player("1"), new Player("2"), this);
-//        mainPane.getChildren().add(0, currentBoard);
+        //Board.checkKingsSaftey();
+        Platform.runLater(() -> {
+            mainPane.getChildren().remove(currentBoard);
+            currentBoard = new Board(new Player("1"), new Player("2"), this);
+            mainPane.getChildren().add(0, currentBoard);
+        });
     }
 }

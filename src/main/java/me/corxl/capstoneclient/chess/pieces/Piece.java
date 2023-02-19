@@ -141,7 +141,7 @@ public class Piece extends VBox {
 
     private static void knightMoves(boolean[][] moveSpaces, BoardLocation location, Piece piece, Space[][] spaces) {
 
-        int[][] targetModifiers = {{1, 2}, {2, 1}, {-1, 2}, {1, -2}, {2, -1}, {-2, 1}};
+        int[][] targetModifiers = {{1, 2}, {2, 1}, {-1, 2}, {1, -2}, {2, -1}, {-2, 1}, {-2, -1}, {-1, -2}};
         for (int i = 0; i < targetModifiers.length; i++) {
             int x = location.getX();
             int y = location.getY();
