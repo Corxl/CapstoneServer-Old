@@ -9,6 +9,7 @@ module me.corxl.capstone {
     requires org.kordamp.ikonli.javafx;
     requires org.kordamp.bootstrapfx.core;
     requires eu.hansolo.tilesfx;
+    requires java.desktop;
 
     opens me.corxl.capstoneclient to javafx.fxml;
     exports me.corxl.capstoneclient;
