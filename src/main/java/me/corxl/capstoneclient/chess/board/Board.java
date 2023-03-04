@@ -2,7 +2,6 @@ package me.corxl.capstoneclient.chess.board;
 
 import javafx.geometry.Pos;
 import javafx.scene.layout.GridPane;
-import javafx.scene.paint.Color;
 import me.corxl.capstoneclient.ChessController;
 import me.corxl.capstoneclient.chess.pieces.Piece;
 import me.corxl.capstoneclient.chess.pieces.PieceEnum;
@@ -12,6 +11,8 @@ import me.corxl.capstoneclient.chess.spaces.BoardLocation;
 import me.corxl.capstoneclient.chess.spaces.Space;
 import me.corxl.capstoneclient.chess.spaces.SpaceColor;
 
+import java.util.HashMap;
+
 public class Board extends GridPane implements BoardInterface {
 
     private Player white, black;
@@ -19,6 +20,8 @@ public class Board extends GridPane implements BoardInterface {
     public static boolean isPieceSelected;
     private static Space[][] spaces;
     public static boolean[][] selectedSpaces;
+    private final static HashMap<TeamColor, Boolean> isChecked = new HashMap<>();
+    private final static HashMap<TeamColor, TeamColor> opposingColors = new HashMap<>();
     private static TeamColor turn;
     public static Piece selectedPiece;
     private final PieceEnum[][] defaultPieces = new PieceEnum[][]{
@@ -41,8 +44,6 @@ public class Board extends GridPane implements BoardInterface {
         this.white = white;
         this.black = black;
         this.setAlignment(Pos.CENTER);
-        // Initialize spaces with alternative colors.
-        Color spaceColor[] = {Color.WHITE, Color.LIGHTGRAY};
 
         for (int i = 0; i < spaces.length; i++) {
             for (int j = 0; j < spaces[i].length; j++) {
@@ -60,16 +61,25 @@ public class Board extends GridPane implements BoardInterface {
                 }
                 TeamColor c = (i < 2) ? TeamColor.BLACK : TeamColor.WHITE;
                 BoardLocation loc = new BoardLocation(i, j);
-                //Space space = (defaultPieces[i][j] == null) ? new Space(colorIndex, loc) : new Space(colorIndex, loc, new Piece(defaultPieces[i][j], c, loc));
-                Space space = new Space(colorIndex, loc);
+                Space space = (defaultPieces[i][j] == null) ? new Space(colorIndex, loc) : new Space(colorIndex, loc, new Piece(defaultPieces[i][j], c, loc));
+                //Space space = new Space(colorIndex, loc);
                 spaces[i][j] = space;
                 // Adds the space object to the Board at the grid index [i][j].
                 this.add(space, j, i);
             }
         }
-        //setPiece(new Piece(PieceEnum.KING, TeamColor.BLACK, new BoardLocation(5, 0)));
-        setPiece(new Piece(PieceEnum.KNIGHT, TeamColor.WHITE, new BoardLocation(3, 3)));
+        isChecked.put(TeamColor.WHITE, false);
+        isChecked.put(TeamColor.BLACK, false);
+        opposingColors.put(TeamColor.WHITE, TeamColor.BLACK);
+        opposingColors.put(TeamColor.BLACK, TeamColor.WHITE);
+    }
 
+    public static HashMap<TeamColor, TeamColor> getOpposingColor() {
+        return opposingColors;
+    }
+
+    public static HashMap<TeamColor, Boolean> getIsChecked() {
+        return isChecked;
     }
 
     public static TeamColor getTurn() {
@@ -80,24 +90,112 @@ public class Board extends GridPane implements BoardInterface {
         turn = color;
     }
 
-    public static void checkKingsSaftey() {
-        boolean[][] whiteMoves = new boolean[8][8];
-        for (Space[] sp : getSpaces()) {
-            for (Space s : sp) {
-                if (!s.isEmpty())
-                    if (s.getPiece().isWhite()) {
-                        boolean[][] moveable = Piece.getPossibleMoves(s.getPiece());
-                        for (int i = 0; i < moveable.length; i++) {
-                            for (int j = 0; j < moveable[i].length; j++) {
-                                if (moveable[i][j]) {
-                                    whiteMoves[i][j] = true;
-                                    spaces[i][j].setSelected(true);
-                                }
-                            }
+
+    public static boolean[][] getPossibleMovesByColor(TeamColor color) {
+        boolean[][] moveSpaces = new boolean[8][8];
+        for (Space[] space : spaces) {
+            for (int j = 0; j < space.length; j++) {
+                Space s = space[j];
+                if (s.isEmpty())
+                    continue;
+                if (s.getPiece().getColor() != color)
+                    continue;
+                Piece p = s.getPiece();
+
+                boolean[][] moves = Piece.getPossibleMoves(p, true);
+                for (int x = 0; x < moves.length; x++) {
+                    for (int y = 0; y < moves[x].length; y++) {
+                        if (moves[x][y]) {
+                            moveSpaces[x][y] = true;
                         }
                     }
+                }
+
             }
         }
+        return moveSpaces;
+    }
+
+    public static boolean[][] getPossibleMovesByColor(TeamColor color, Space[][] sps) {
+        boolean[][] moveSpaces = new boolean[8][8];
+        for (Space[] space : sps) {
+            for (int j = 0; j < space.length; j++) {
+                Space s = space[j];
+                if (s.isEmpty())
+                    continue;
+                if (s.getPiece().getColor() != color)
+                    continue;
+                Piece p = s.getPiece();
+
+                boolean[][] moves = Piece.getPossibleMoves(p, true, sps);
+                for (int x = 0; x < moves.length; x++) {
+                    for (int y = 0; y < moves[x].length; y++) {
+                        if (moves[x][y]) {
+                            moveSpaces[x][y] = true;
+                        }
+                    }
+                }
+
+            }
+        }
+        return moveSpaces;
+    }
+
+    public static boolean checkForGameOver() {
+        TeamColor opposingColor = getOpposingColor().get(getTurn());
+        System.out.println(opposingColor);
+        boolean[][] possibleSpaces = getPossibleMovesByColor(opposingColor);
+        for (boolean[] possSpaces : possibleSpaces) {
+            for (boolean poss : possSpaces) {
+                if (poss) {
+                    return false;
+                }
+            }
+        }
+//        for (int i = 0; i < spaces.length; i++) {
+//            for (int j = 0; j < spaces[i].length; j++) {
+//                if (spaces[i][j].isEmpty())
+//                    continue;
+//                Piece p = spaces[i][j].getPiece();
+//                if (p.getColor() != opposingColor)
+//                    continue;
+//                Piece pieceCopy = new Piece(p);
+//                Space[][] spacesCopy = new Space[8][8];
+//                for (int x = 0; x < spaces.length; x++) {
+//                    for (int y = 0; y < spaces[x].length; y++) {
+//                        spacesCopy[x][y] = new Space(spaces[x][y]);
+//                    }
+//                }
+//                BoardLocation oldLoc = new BoardLocation(pieceCopy.getLocation());
+//                BoardLocation newLoc = new BoardLocation(i, j);
+//                Board.simulateMove(spacesCopy, pieceCopy, newLoc, oldLoc);
+//                boolean[][] possMoves = Board.getPossibleMovesByColor(Board.getOpposingColor().get(pieceCopy.getColor()), spacesCopy);
+//                boolean isChecked = Board.isInCheck(pieceCopy.getColor(), spacesCopy, possMoves);
+//                if (!isChecked)
+//                    return false;
+//            }
+//        }
+
+        return true;
+    }
+
+    public static boolean isInCheck(TeamColor targetColor, Space[][] spaces, boolean[][] moveSpaces) {
+        for (int i = 0; i < moveSpaces.length; i++) {
+            for (int j = 0; j < moveSpaces[i].length; j++) {
+                if (moveSpaces[i][j]) {
+                    Space s = spaces[i][j];
+                    if (s.isEmpty())
+                        continue;
+                    Piece p = s.getPiece();
+                    if (p.getColor() != targetColor)
+                        continue;
+                    if (p.getPieceType() != PieceEnum.KING)
+                        continue;
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Override
@@ -148,6 +246,15 @@ public class Board extends GridPane implements BoardInterface {
             return;
         Space s = spaces[newLocation.getX()][newLocation.getY()];
         Space old = spaces[oldLocation.getX()][oldLocation.getY()];
+        s.setPiece(p);
+        old.setPiece(null);
+    }
+
+    public static void simulateMove(Space[][] simSpaces, Piece p, BoardLocation newLocation, BoardLocation oldLocation) {
+        if (p == null)
+            return;
+        Space s = simSpaces[newLocation.getX()][newLocation.getY()];
+        Space old = simSpaces[oldLocation.getX()][oldLocation.getY()];
         s.setPiece(p);
         old.setPiece(null);
     }

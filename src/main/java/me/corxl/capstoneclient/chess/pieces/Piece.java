@@ -11,11 +11,16 @@ import me.corxl.capstoneclient.chess.spaces.Space;
 import java.util.Arrays;
 
 public class Piece extends VBox {
-    private TeamColor color;
+    private final TeamColor color;
     private BoardLocation location;
-    private PieceEnum pieceType;
+    private final PieceEnum pieceType;
     private boolean pawnMoved = false;
 
+    public Piece(Piece piece) {
+        this.pieceType = piece.getPieceType();
+        this.color = piece.getColor();
+        this.location = piece.getLocation();
+    }
 
     public Piece(PieceEnum pieceType, TeamColor color, BoardLocation location) {
         this.color = color;
@@ -38,8 +43,7 @@ public class Piece extends VBox {
                 return;
             }
             Board.clearSelections();
-            System.out.println("----------");
-            boolean[][] possileMoves = getPossibleMoves(this);
+            boolean[][] possileMoves = getPossibleMoves(this, false);
             Board.selectedSpaces = possileMoves;
             Space[][] spaces = Board.getSpaces();
             for (int j = 0; j < possileMoves.length; j++) {
@@ -48,7 +52,7 @@ public class Piece extends VBox {
                         spaces[j][k].setSelected(true);
                     }
                 }
-                System.out.println(Arrays.toString(possileMoves[j]));
+//                System.out.println(Arrays.toString(possileMoves[j]));
             }
             Board.selectedPiece = this;
         });
@@ -83,37 +87,99 @@ public class Piece extends VBox {
         return this.location;
     }
 
-    public static boolean[][] getPossibleMoves(Piece piece) {
-        if (piece.getPieceType() == PieceEnum.ROOK)
-            System.out.println("HORRAY!!");
+    public static boolean[][] getPossibleMoves(Piece piece, boolean targetFriend, Space[][] spaces) {
+        BoardLocation location = piece.getLocation();
+        boolean[][] moveSpaces = new boolean[8][8];
+
+        switch (piece.pieceType) {
+            case PAWN:
+                pawnMoves(moveSpaces, location, piece, spaces, targetFriend);
+                break;
+            case ROOK:
+                rookMoves(moveSpaces, piece, spaces, targetFriend);
+                break;
+            case KING:
+                kingMoves(moveSpaces, location, piece, spaces, targetFriend);
+                break;
+            case KNIGHT:
+                knightMoves(moveSpaces, location, piece, spaces, targetFriend);
+                break;
+            case BISHOP:
+                bishopMoves(moveSpaces, location, piece, spaces, targetFriend);
+                break;
+            case QUEEN:
+                queenMoves(moveSpaces, location, piece, spaces, targetFriend);
+                break;
+        }
+        return moveSpaces;
+    }
+
+    public static boolean[][] getPossibleMoves(Piece piece, boolean targetFriend) {
         Space[][] spaces = Board.getSpaces();
         BoardLocation location = piece.getLocation();
         boolean[][] moveSpaces = new boolean[8][8];
 
         switch (piece.pieceType) {
             case PAWN:
-                pawnMoves(moveSpaces, location, piece, spaces);
+                pawnMoves(moveSpaces, location, piece, spaces, targetFriend);
                 break;
             case ROOK:
-                rookMoves(moveSpaces, piece, spaces);
+                rookMoves(moveSpaces, piece, spaces, targetFriend);
                 break;
             case KING:
-                kingMoves(moveSpaces, location, piece, spaces);
+                kingMoves(moveSpaces, location, piece, spaces, targetFriend);
                 break;
             case KNIGHT:
-                knightMoves(moveSpaces, location, piece, spaces);
+                knightMoves(moveSpaces, location, piece, spaces, targetFriend);
                 break;
             case BISHOP:
-                bishopMoves(moveSpaces, location, piece, spaces);
+                bishopMoves(moveSpaces, location, piece, spaces, targetFriend);
                 break;
             case QUEEN:
-                queenMoves(moveSpaces, location, piece, spaces);
+                queenMoves(moveSpaces, location, piece, spaces, targetFriend);
                 break;
+        }
+
+        for (int i = 0; i < moveSpaces.length; i++) {
+            for (int j = 0; j < moveSpaces[i].length; j++) {
+                if (moveSpaces[i][j]) {
+                    Piece pieceCopy = new Piece(piece);
+                    Space[][] spacesCopy = new Space[8][8];
+                    for (int x = 0; x < spaces.length; x++) {
+                        for (int y = 0; y < spaces[x].length; y++) {
+                            spacesCopy[x][y] = new Space(spaces[x][y]);
+                        }
+                    }
+                    // Simulate spaces, if the king is still in check after that move, remove it from the possible move spaces.
+                    BoardLocation oldLoc = new BoardLocation(piece.getLocation());
+                    BoardLocation newLoc = new BoardLocation(i, j);
+                    Board.simulateMove(spacesCopy, pieceCopy, newLoc, oldLoc);
+                    boolean[][] possMoves = Board.getPossibleMovesByColor(Board.getOpposingColor().get(pieceCopy.getColor()), spacesCopy);
+                    System.out.println("_-_-_-_-_");
+                    for (int k = 0; k < possMoves.length; k++) {
+                        System.out.println(Arrays.toString(possMoves[k]));
+                    }
+                    for (int k = 0; k < spacesCopy.length; k++) {
+                        for (int x = 0; x < spacesCopy.length; x++) {
+                            System.out.print((spacesCopy[k][x].getPiece() == null ? null : spacesCopy[k][x].getPiece().getPieceType()) + ", ");
+                        }
+                        System.out.println();
+                    }
+                    System.out.println("_-_-_-_-_");
+                    boolean isChecked = Board.isInCheck(pieceCopy.getColor(), spacesCopy, possMoves);
+                    if (!isChecked) {
+                        moveSpaces[i][j] = true;
+                        System.out.println(i + ", " + j);
+                    } else {
+                        moveSpaces[i][j] = false;
+                    }
+                }
+            }
         }
         return moveSpaces;
     }
 
-    private static void bishopMoves(boolean[][] moveSpaces, BoardLocation location, Piece piece, Space[][] spaces) {
+    private static void bishopMoves(boolean[][] moveSpaces, BoardLocation location, Piece piece, Space[][] spaces, boolean targetFriend) {
         int[][] relativeSpaces = {{1, 1}, {-1, 1}, {-1, -1}, {1, -1}};
         for (int i = 0; i < relativeSpaces.length; i++) {
             int xMod = relativeSpaces[i][0];
@@ -124,7 +190,7 @@ public class Piece extends VBox {
                 if (spaces[targetX][targetY].isEmpty())
                     moveSpaces[targetX][targetY] = true;
                 else {
-                    if (spaces[targetX][targetY].getPiece().getColor() != piece.getColor())
+                    if (spaces[targetX][targetY].getPiece().getColor() != piece.getColor() || targetFriend)
                         moveSpaces[targetX][targetY] = true;
                     break;
                 }
@@ -134,12 +200,12 @@ public class Piece extends VBox {
         }
     }
 
-    private static void queenMoves(boolean[][] moveSpaces, BoardLocation location, Piece piece, Space[][] spaces) {
-        rookMoves(moveSpaces, piece, spaces);
-        bishopMoves(moveSpaces, location, piece, spaces);
+    private static void queenMoves(boolean[][] moveSpaces, BoardLocation location, Piece piece, Space[][] spaces, boolean targetFriend) {
+        rookMoves(moveSpaces, piece, spaces, targetFriend);
+        bishopMoves(moveSpaces, location, piece, spaces, targetFriend);
     }
 
-    private static void knightMoves(boolean[][] moveSpaces, BoardLocation location, Piece piece, Space[][] spaces) {
+    private static void knightMoves(boolean[][] moveSpaces, BoardLocation location, Piece piece, Space[][] spaces, boolean targetFriend) {
 
         int[][] targetModifiers = {{1, 2}, {2, 1}, {-1, 2}, {1, -2}, {2, -1}, {-2, 1}, {-2, -1}, {-1, -2}};
         for (int i = 0; i < targetModifiers.length; i++) {
@@ -151,17 +217,16 @@ public class Piece extends VBox {
                 if (spaces[targetX][targetY].isEmpty())
                     moveSpaces[targetX][targetY] = true;
                 else {
-                    if (spaces[targetX][targetY].getPiece().getColor() != piece.getColor())
+                    if (spaces[targetX][targetY].getPiece().getColor() != piece.getColor() || targetFriend)
                         moveSpaces[targetX][targetY] = true;
                 }
             }
         }
-
-
     }
 
-    private static void kingMoves(boolean[][] moveSpaces, BoardLocation location, Piece piece, Space[][] spaces) {
+    private static void kingMoves(boolean[][] moveSpaces, BoardLocation location, Piece piece, Space[][] spaces, boolean targetFriend) {
         int[][] relativeSpaces = {{1, 1}, {-1, 1}, {-1, -1}, {1, -1}};
+
         for (int i = 0; i < relativeSpaces.length; i++) {
             int xMod = relativeSpaces[i][0];
             int yMod = relativeSpaces[i][1];
@@ -169,20 +234,20 @@ public class Piece extends VBox {
                 if (spaces[location.getX() + xMod][location.getY()].isEmpty())
                     moveSpaces[location.getX() + xMod][location.getY()] = true;
                 else {
-                    if (spaces[location.getX() + xMod][location.getY()].getPiece().getColor() != piece.getColor())
+                    if (spaces[location.getX() + xMod][location.getY()].getPiece().getColor() != piece.getColor() || targetFriend)
                         moveSpaces[location.getX() + xMod][location.getY()] = true;
                 }
                 if (spaces[location.getX() + xMod][location.getY() + 1].isEmpty())
                     moveSpaces[location.getX() + xMod][location.getY() + 1] = true;
                 else {
-                    if (spaces[location.getX() + xMod][location.getY() + 1].getPiece().getColor() != piece.getColor())
+                    if (spaces[location.getX() + xMod][location.getY() + 1].getPiece().getColor() != piece.getColor() || targetFriend)
                         moveSpaces[location.getX() + xMod][location.getY() + 1] = true;
                 }
                 if (location.getY() - 1 >= 0 && location.getY() - 1 < 8) {
                     if (spaces[location.getX() + xMod][location.getY() - 1].isEmpty())
                         moveSpaces[location.getX() + xMod][location.getY() - 1] = true;
                     else {
-                        if (spaces[location.getX() + xMod][location.getY() - 1].getPiece().getColor() != piece.getColor())
+                        if (spaces[location.getX() + xMod][location.getY() - 1].getPiece().getColor() != piece.getColor() || targetFriend)
                             moveSpaces[location.getX() + xMod][location.getY() - 1] = true;
                     }
                 }
@@ -191,27 +256,27 @@ public class Piece extends VBox {
                 if (spaces[location.getX()][location.getY() + yMod].isEmpty())
                     moveSpaces[location.getX()][location.getY() + yMod] = true;
                 else {
-                    if (spaces[location.getX()][location.getY() + yMod].getPiece().getColor() != piece.getColor())
+                    if (spaces[location.getX()][location.getY() + yMod].getPiece().getColor() != piece.getColor() || targetFriend)
                         moveSpaces[location.getX()][location.getY() + yMod] = true;
                 }
             }
         }
     }
 
-    private static void pawnMoves(boolean[][] moveSpaces, BoardLocation location, Piece piece, Space[][] spaces) {
+    private static void pawnMoves(boolean[][] moveSpaces, BoardLocation location, Piece piece, Space[][] spaces, boolean targetFriend) {
         int modifier = piece.isWhite() ? -1 : 1;
         int pawnMovedModifier = !piece.pawnMoved ? 2 : 1;
-        System.out.println(location.getX() + ", " + location.getY() + " :: " + pawnMovedModifier);
+        //System.out.println(location.getX() + ", " + location.getY() + " :: " + pawnMovedModifier);
         if (!(location.getY() - 1 < 0)) {
             Space left = spaces[location.getX() + (modifier)][location.getY() - 1];
             if (!left.isEmpty())
-                if (left.getPiece().getColor() != piece.getColor())
+                if (left.getPiece().getColor() != piece.getColor() || targetFriend)
                     moveSpaces[location.getX() + (modifier)][location.getY() - 1] = true;
         }
         if (!(location.getY() + 1 >= spaces[location.getX() + (modifier)].length)) {
             Space right = spaces[location.getX() + (modifier)][location.getY() + 1];
             if (!right.isEmpty())
-                if (right.getPiece().getColor() != piece.getColor())
+                if (right.getPiece().getColor() != piece.getColor() || targetFriend)
                     moveSpaces[location.getX() + (modifier)][location.getY() + 1] = true;
         }
         for (int i = 1; i <= pawnMovedModifier; i++) {
@@ -219,17 +284,19 @@ public class Piece extends VBox {
             if (s.isEmpty()) {
                 moveSpaces[location.getX() + (modifier * i)][location.getY()] = true;
             } else {
+                if (targetFriend)
+                    moveSpaces[location.getX() + (modifier * i)][location.getY()] = true;
                 break;
             }
         }
     }
 
-    private static void rookMoves(boolean[][] moveSpaces, Piece piece, Space[][] spaces) {
+    private static void rookMoves(boolean[][] moveSpaces, Piece piece, Space[][] spaces, boolean targetFriend) {
         for (int i = piece.getLocation().getX() + 1; i < spaces.length; i++) {
             if (spaces[i][piece.getLocation().getY()].isEmpty())
                 moveSpaces[i][piece.getLocation().getY()] = true;
             else {
-                if (spaces[i][piece.getLocation().getY()].getPiece().getColor() != piece.getColor()) {
+                if (spaces[i][piece.getLocation().getY()].getPiece().getColor() != piece.getColor() || targetFriend) {
                     moveSpaces[i][piece.getLocation().getY()] = true;
                 }
                 break;
@@ -239,7 +306,7 @@ public class Piece extends VBox {
             if (spaces[i][piece.getLocation().getY()].isEmpty())
                 moveSpaces[i][piece.getLocation().getY()] = true;
             else {
-                if (spaces[i][piece.getLocation().getY()].getPiece().getColor() != piece.getColor()) {
+                if (spaces[i][piece.getLocation().getY()].getPiece().getColor() != piece.getColor() || targetFriend) {
                     moveSpaces[i][piece.getLocation().getY()] = true;
                 }
                 break;
@@ -249,7 +316,7 @@ public class Piece extends VBox {
             if (spaces[piece.getLocation().getX()][i].isEmpty())
                 moveSpaces[piece.getLocation().getX()][i] = true;
             else {
-                if (spaces[piece.getLocation().getX()][i].getPiece().getColor() != piece.getColor()) {
+                if (spaces[piece.getLocation().getX()][i].getPiece().getColor() != piece.getColor() || targetFriend) {
                     moveSpaces[piece.getLocation().getX()][i] = true;
                 }
                 break;
@@ -259,7 +326,7 @@ public class Piece extends VBox {
             if (spaces[piece.getLocation().getX()][i].isEmpty())
                 moveSpaces[piece.getLocation().getX()][i] = true;
             else {
-                if (spaces[piece.getLocation().getX()][i].getPiece().getColor() != piece.getColor()) {
+                if (spaces[piece.getLocation().getX()][i].getPiece().getColor() != piece.getColor() || targetFriend) {
                     moveSpaces[piece.getLocation().getX()][i] = true;
                 }
                 break;

@@ -26,6 +26,12 @@ public class Space extends StackPane implements SpaceInterface {
     private ImageView select;
     private boolean isSelected = false;
 
+    public Space(Space space) {
+        this.location = new BoardLocation(space.getLocation());
+        if (space.getPiece() != null)
+            this.currentPiece = new Piece(space.getPiece());
+    }
+
     public Space(SpaceColor color, BoardLocation location) {
         this.location = location;
         this.setStyle("-fx-background-color: #1F1F1F");
@@ -95,8 +101,17 @@ public class Space extends StackPane implements SpaceInterface {
                 Board.setPiece(Board.selectedPiece, new BoardLocation(this.getLocation().getX(), this.getLocation().getY()), Board.selectedPiece.getLocation());
                 Board.isPieceSelected = false;
                 Board.clearSelections();
-                Board.setTurn(Board.getTurn() == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE);
-                //Board.checkKingsSaftey();
+                TeamColor oppositeColor = Board.getTurn() == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE;
+                boolean isCheck = Board.isInCheck(oppositeColor, Board.getSpaces(), Board.getPossibleMovesByColor(Board.getTurn()));
+                Board.getIsChecked().put(oppositeColor, isCheck);
+                //System.out.println(isCheck ? oppositeColor + " is in check!" : oppositeColor + " is not in check...");
+                if (isCheck) {
+                    System.out.println(Board.checkForGameOver() ? "The game is Over :(." : "The game is NOT over :).");
+                }
+
+
+                Board.setTurn(oppositeColor);
+
 
             }
         }
@@ -161,7 +176,7 @@ public class Space extends StackPane implements SpaceInterface {
             return;
         isSelected = selected;
         if (selected) {
-            String p = System.getProperty("user.dir") + SELECT_FILE_LOCATION;
+            String p = System.getProperty("user.dir") + SELECT_FILE_LOCATION; // Any use of System.getProperty needs to be converted to the correct implementation for .jar executions.
             Image i = new Image(p);
             ImageView v = new ImageView(i);
             select = v;
