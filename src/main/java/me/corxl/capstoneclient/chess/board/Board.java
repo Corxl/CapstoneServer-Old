@@ -116,6 +116,31 @@ public class Board extends GridPane implements BoardInterface {
         return moveSpaces;
     }
 
+    public static boolean[][] getPossibleMovesByColor(TeamColor color, boolean targetFriend) {
+        boolean[][] moveSpaces = new boolean[8][8];
+        for (Space[] space : spaces) {
+            for (int j = 0; j < space.length; j++) {
+                Space s = space[j];
+                if (s.isEmpty())
+                    continue;
+                if (s.getPiece().getColor() != color)
+                    continue;
+                Piece p = s.getPiece();
+
+                boolean[][] moves = Piece.getPossibleMoves(p, targetFriend);
+                for (int x = 0; x < moves.length; x++) {
+                    for (int y = 0; y < moves[x].length; y++) {
+                        if (moves[x][y]) {
+                            moveSpaces[x][y] = true;
+                        }
+                    }
+                }
+
+            }
+        }
+        return moveSpaces;
+    }
+
     public static boolean[][] getPossibleMovesByColor(TeamColor color, Space[][] sps) {
         boolean[][] moveSpaces = new boolean[8][8];
         for (Space[] space : sps) {
@@ -144,10 +169,12 @@ public class Board extends GridPane implements BoardInterface {
     public static boolean checkForGameOver() {
         TeamColor opposingColor = getOpposingColor().get(getTurn());
         System.out.println(opposingColor);
-        boolean[][] possibleSpaces = getPossibleMovesByColor(opposingColor);
-        for (boolean[] possSpaces : possibleSpaces) {
-            for (boolean poss : possSpaces) {
-                if (poss) {
+        boolean[][] possibleSpaces = getPossibleMovesByColor(opposingColor, false);
+
+        for (int i = 0; i < possibleSpaces.length; i++) {
+            for (int j = 0; j < possibleSpaces[i].length; j++) {
+                if (possibleSpaces[i][j]) {
+                    System.out.println(i + " | " + j);
                     return false;
                 }
             }

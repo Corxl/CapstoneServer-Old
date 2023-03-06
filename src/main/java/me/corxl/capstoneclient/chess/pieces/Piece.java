@@ -8,8 +8,6 @@ import me.corxl.capstoneclient.chess.board.Board;
 import me.corxl.capstoneclient.chess.spaces.BoardLocation;
 import me.corxl.capstoneclient.chess.spaces.Space;
 
-import java.util.Arrays;
-
 public class Piece extends VBox {
     private final TeamColor color;
     private BoardLocation location;
@@ -155,17 +153,17 @@ public class Piece extends VBox {
                     BoardLocation newLoc = new BoardLocation(i, j);
                     Board.simulateMove(spacesCopy, pieceCopy, newLoc, oldLoc);
                     boolean[][] possMoves = Board.getPossibleMovesByColor(Board.getOpposingColor().get(pieceCopy.getColor()), spacesCopy);
-                    System.out.println("_-_-_-_-_");
-                    for (int k = 0; k < possMoves.length; k++) {
-                        System.out.println(Arrays.toString(possMoves[k]));
-                    }
-                    for (int k = 0; k < spacesCopy.length; k++) {
-                        for (int x = 0; x < spacesCopy.length; x++) {
-                            System.out.print((spacesCopy[k][x].getPiece() == null ? null : spacesCopy[k][x].getPiece().getPieceType()) + ", ");
-                        }
-                        System.out.println();
-                    }
-                    System.out.println("_-_-_-_-_");
+//                    System.out.println("_-_-_-_-_");
+//                    for (int k = 0; k < possMoves.length; k++) {
+//                        System.out.println(Arrays.toString(possMoves[k]));
+//                    }
+//                    for (int k = 0; k < spacesCopy.length; k++) {
+//                        for (int x = 0; x < spacesCopy.length; x++) {
+//                            System.out.print((spacesCopy[k][x].getPiece() == null ? null : spacesCopy[k][x].getPiece().getPieceType()) + ", ");
+//                        }
+//                        System.out.println();
+//                    }
+//                    System.out.println("_-_-_-_-_");
                     boolean isChecked = Board.isInCheck(pieceCopy.getColor(), spacesCopy, possMoves);
                     if (!isChecked) {
                         moveSpaces[i][j] = true;
