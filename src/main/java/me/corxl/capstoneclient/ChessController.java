@@ -20,7 +20,6 @@ public class ChessController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        currentBoard = new Board(new Player("1"), new Player("2"), this);
 
         mainPane.getChildren().add(0, currentBoard);
     }
@@ -28,14 +27,6 @@ public class ChessController implements Initializable {
     @FXML
     void resetGame(ActionEvent event) {
         //Board.checkKingsSaftey();
-        boolean[][] moves = Board.getPossibleMovesByColor(TeamColor.WHITE);
-        for (int i = 0; i < moves.length; i++) {
-            for (int j = 0; j < moves[i].length; j++) {
-                if (moves[i][j])
-                    Board.getSpaces()[i][j].setSelected(true);
-            }
-        }
-
 //        Platform.runLater(() -> {
 //            mainPane.getChildren().remove(currentBoard);
 //            currentBoard = new Board(new Player("1"), new Player("2"), this);

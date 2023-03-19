@@ -14,9 +14,10 @@ import me.corxl.capstoneclient.chess.pieces.TeamColor;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import java.io.File;
+import java.io.Serializable;
 import java.util.Random;
 
-public class Space extends StackPane implements SpaceInterface {
+public class Space extends StackPane implements SpaceInterface, Serializable {
 
     SpaceColor color;
     private final BoardLocation location;
@@ -30,6 +31,16 @@ public class Space extends StackPane implements SpaceInterface {
         this.location = new BoardLocation(space.getLocation());
         if (space.getPiece() != null)
             this.currentPiece = new Piece(space.getPiece());
+    }
+
+    public Space(BoardLocation location) {
+        this.location = location;
+        this.currentPiece = null;
+    }
+
+    public Space(BoardLocation location, Piece p) {
+        this.location = location;
+        this.currentPiece = p;
     }
 
     public Space(SpaceColor color, BoardLocation location) {

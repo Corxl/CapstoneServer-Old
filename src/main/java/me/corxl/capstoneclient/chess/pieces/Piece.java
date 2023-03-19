@@ -8,7 +8,9 @@ import me.corxl.capstoneclient.chess.board.Board;
 import me.corxl.capstoneclient.chess.spaces.BoardLocation;
 import me.corxl.capstoneclient.chess.spaces.Space;
 
-public class Piece extends VBox {
+import java.io.Serializable;
+
+public class Piece extends VBox implements Serializable {
     private final TeamColor color;
     private BoardLocation location;
     private final PieceEnum pieceType;
@@ -18,43 +20,52 @@ public class Piece extends VBox {
         this.pieceType = piece.getPieceType();
         this.color = piece.getColor();
         this.location = piece.getLocation();
+        this.pawnMoved = piece.pawnMoved;
     }
-
-    public Piece(PieceEnum pieceType, TeamColor color, BoardLocation location) {
+    public Piece(PieceEnum pieceType, TeamColor color, BoardLocation location, boolean isPawnMoved) {
         this.color = color;
         this.location = location;
         this.pieceType = pieceType;
-        this.setAlignment(Pos.CENTER);
-
-        String p = this.isWhite()
-                ?
-                System.getProperty("user.dir") + "\\src\\main\\resources\\me\\corxl\\capstoneclient\\" + this.pieceType.fileLocation[0]
-                :
-                System.getProperty("user.dir") + "\\src\\main\\resources\\me\\corxl\\capstoneclient\\" + this.pieceType.fileLocation[1];
-        Image i = new Image(p);
-        ImageView v = new ImageView(i);
-        v.setFitWidth(50);
-        v.setFitHeight(50);
-        this.getChildren().add(v);
-        this.setOnMouseClicked((e) -> {
-            if (this.color != Board.getTurn()) {
-                return;
-            }
-            Board.clearSelections();
-            boolean[][] possileMoves = getPossibleMoves(this, false);
-            Board.selectedSpaces = possileMoves;
-            Space[][] spaces = Board.getSpaces();
-            for (int j = 0; j < possileMoves.length; j++) {
-                for (int k = 0; k < possileMoves[j].length; k++) {
-                    if (possileMoves[j][k]) {
-                        spaces[j][k].setSelected(true);
-                    }
-                }
-//                System.out.println(Arrays.toString(possileMoves[j]));
-            }
-            Board.selectedPiece = this;
-        });
+        this.pawnMoved = isPawnMoved;
     }
+    public boolean isPawnMoved() {
+        return this.pawnMoved;
+    }
+//    public Piece(PieceEnum pieceType, TeamColor color, BoardLocation location) {
+//        this.color = color;
+//        this.location = location;
+//        this.pieceType = pieceType;
+//        this.setAlignment(Pos.CENTER);
+//
+//        String p = this.isWhite()
+//                ?
+//                System.getProperty("user.dir") + "\\src\\main\\resources\\me\\corxl\\capstoneclient\\" + this.pieceType.fileLocation[0]
+//                :
+//                System.getProperty("user.dir") + "\\src\\main\\resources\\me\\corxl\\capstoneclient\\" + this.pieceType.fileLocation[1];
+//        Image i = new Image(p);
+//        ImageView v = new ImageView(i);
+//        v.setFitWidth(50);
+//        v.setFitHeight(50);
+//        this.getChildren().add(v);
+//        this.setOnMouseClicked((e) -> {
+//            if (this.color != Board.getTurn()) {
+//                return;
+//            }
+//            Board.clearSelections();
+//            boolean[][] possileMoves = getPossibleMoves(this, false);
+//            Board.selectedSpaces = possileMoves;
+//            Space[][] spaces = Board.getSpaces();
+//            for (int j = 0; j < possileMoves.length; j++) {
+//                for (int k = 0; k < possileMoves[j].length; k++) {
+//                    if (possileMoves[j][k]) {
+//                        spaces[j][k].setSelected(true);
+//                    }
+//                }
+////                System.out.println(Arrays.toString(possileMoves[j]));
+//            }
+//            Board.selectedPiece = this;
+//        });
+//    }
 
     ;
 
@@ -264,6 +275,7 @@ public class Piece extends VBox {
     private static void pawnMoves(boolean[][] moveSpaces, BoardLocation location, Piece piece, Space[][] spaces, boolean targetFriend) {
         int modifier = piece.isWhite() ? -1 : 1;
         int pawnMovedModifier = !piece.pawnMoved ? 2 : 1;
+        System.out.println(piece.pawnMoved);
         //System.out.println(location.getX() + ", " + location.getY() + " :: " + pawnMovedModifier);
         if (!(location.getY() - 1 < 0)) {
             Space left = spaces[location.getX() + (modifier)][location.getY() - 1];

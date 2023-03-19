@@ -24,7 +24,7 @@ public class Board extends GridPane implements BoardInterface {
     private final static HashMap<TeamColor, TeamColor> opposingColors = new HashMap<>();
     private static TeamColor turn;
     public static Piece selectedPiece;
-    private final PieceEnum[][] defaultPieces = new PieceEnum[][]{
+    public static final PieceEnum[][] defaultPieces = new PieceEnum[][]{
             {PieceEnum.ROOK, PieceEnum.KNIGHT, PieceEnum.BISHOP, PieceEnum.QUEEN, PieceEnum.KING, PieceEnum.BISHOP, PieceEnum.KNIGHT, PieceEnum.ROOK},
             {PieceEnum.PAWN, PieceEnum.PAWN, PieceEnum.PAWN, PieceEnum.PAWN, PieceEnum.PAWN, PieceEnum.PAWN, PieceEnum.PAWN, PieceEnum.PAWN},
             {null, null, null, null, null, null, null, null},
@@ -35,37 +35,22 @@ public class Board extends GridPane implements BoardInterface {
             {PieceEnum.ROOK, PieceEnum.KNIGHT, PieceEnum.BISHOP, PieceEnum.KING, PieceEnum.QUEEN, PieceEnum.BISHOP, PieceEnum.KNIGHT, PieceEnum.ROOK}
     };
 
-    public Board(Player white, Player black, ChessController controller) {
+    public Board(Player white, Player black) {
         isPieceSelected = false;
         spaces = new Space[8][8];
         selectedSpaces = new boolean[8][8];
         turn = TeamColor.WHITE;
-        this.controller = controller;
         this.white = white;
         this.black = black;
-        this.setAlignment(Pos.CENTER);
 
         for (int i = 0; i < spaces.length; i++) {
             for (int j = 0; j < spaces[i].length; j++) {
-                SpaceColor colorIndex;
-                if (i % 2 == 0) {
-                    if (j % 2 == 0)
-                        colorIndex = SpaceColor.LIGHT;
-                    else
-                        colorIndex = SpaceColor.DARK;
-                } else {
-                    if (j % 2 == 0)
-                        colorIndex = SpaceColor.DARK;
-                    else
-                        colorIndex = SpaceColor.LIGHT;
-                }
                 TeamColor c = (i < 2) ? TeamColor.BLACK : TeamColor.WHITE;
                 BoardLocation loc = new BoardLocation(i, j);
-                Space space = (defaultPieces[i][j] == null) ? new Space(colorIndex, loc) : new Space(colorIndex, loc, new Piece(defaultPieces[i][j], c, loc));
+                Space space = (defaultPieces[i][j] == null) ? new Space(loc) : new Space(loc, new Piece(defaultPieces[i][j], c, loc, false));
                 //Space space = new Space(colorIndex, loc);
                 spaces[i][j] = space;
                 // Adds the space object to the Board at the grid index [i][j].
-                this.add(space, j, i);
             }
         }
         isChecked.put(TeamColor.WHITE, false);
